@@ -1,1 +1,1 @@
-# Obsidian-Work-Skills
+# obsidian-work-skills
