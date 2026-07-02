@@ -41,6 +41,33 @@ It should not:
 - create productivity reports
 - include secrets, env values, raw customer exports, or full transcripts
 
+## Prerequisites
+
+Required:
+
+- Bash shell on Linux, macOS, or WSL.
+- A local Obsidian vault folder path that the agent can read and write.
+- `rg` / ripgrep available on `PATH`.
+- At least one supported agent surface: Codex/OpenAI, Claude Code, or GitHub Copilot / VS Code with Agent Skills.
+
+Recommended:
+
+- Obsidian desktop app installed so you can view/search the generated notes.
+- `git` available on `PATH` if you want repo/workspace facts, commit history, diffs, and implementation search.
+- Local AI session history enabled for the agents you want to journal from: Codex, Claude, and/or Copilot.
+
+Not required:
+
+- Obsidian CLI.
+- Obsidian community plugins.
+- A separate Obsidian agent skill.
+- Obsidian running while notes are written.
+
+Optional autojournal only:
+
+- Codex CLI, because the scheduled runner currently invokes `codex exec`.
+- user-level `systemd` timers if you want scheduled runs on Linux/WSL.
+
 ## Install
 
 ```bash
@@ -303,8 +330,11 @@ It checks:
 
 - config exists
 - vault exists and is writable
+- `.obsidian` vault marker exists, with a warning if missing
 - skills are installed
 - `rg` exists
+- `git` exists, with a warning if missing
+- Obsidian command exists when available, informational only
 - Codex CLI exists for the optional scheduled autojournal runner
 - repo roots exist
 - agent session sources are present or absent

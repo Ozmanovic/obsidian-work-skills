@@ -12,6 +12,7 @@ if [[ -n "${WORK_SKILLS_SKILLS_DIR:-}" ]]; then
 fi
 
 ok() { printf 'OK   %s\n' "$*"; }
+info() { printf 'INFO %s\n' "$*"; }
 warn() { printf 'WARN %s\n' "$*"; }
 fail() { printf 'FAIL %s\n' "$*"; STATUS=1; }
 
@@ -59,6 +60,11 @@ AGENT_SOURCES="${PROJECT_MEMORY_AGENT_SOURCES:-codex,claude,copilot}"
 
 if [[ -n "$VAULT" && -d "$VAULT" ]]; then
   ok "Vault found: $VAULT"
+  if [[ -d "$VAULT/.obsidian" ]]; then
+    ok "Obsidian vault marker found: $VAULT/.obsidian"
+  else
+    warn "No .obsidian folder found under vault path. Notes can still be written, but confirm this is the intended Obsidian vault."
+  fi
   mkdir -p "$VAULT/$WORK_ROOT"
   test_file="$VAULT/$WORK_ROOT/.work-skills-write-test"
   if : > "$test_file" 2>/dev/null; then
@@ -93,6 +99,18 @@ if command -v rg >/dev/null 2>&1; then
   ok "rg found: $(command -v rg)"
 else
   fail "rg not found"
+fi
+
+if command -v git >/dev/null 2>&1; then
+  ok "git found: $(command -v git)"
+else
+  warn "git not found. Obsidian notes still work, but repo facts, diffs, commits, and implementation search will be limited."
+fi
+
+if command -v obsidian >/dev/null 2>&1; then
+  info "Obsidian command found: $(command -v obsidian)"
+else
+  info "Obsidian command not found. Not required; work skills write Markdown files directly to the vault folder."
 fi
 
 if command -v codex >/dev/null 2>&1; then

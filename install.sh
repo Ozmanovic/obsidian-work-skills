@@ -89,6 +89,17 @@ if [[ -z "$VAULT" && ! -f "$CONFIG_FILE" ]]; then
   exit 1
 fi
 
+if [[ -n "$VAULT" && ! -d "$VAULT" ]]; then
+  echo "Vault path not found: $VAULT" >&2
+  echo "Create/open the folder as an Obsidian vault first, then rerun install." >&2
+  exit 1
+fi
+
+if [[ -n "$VAULT" && ! -d "$VAULT/.obsidian" ]]; then
+  echo "WARN Vault has no .obsidian folder: $VAULT" >&2
+  echo "WARN This can still work as a Markdown folder, but confirm this is the intended Obsidian vault." >&2
+fi
+
 mkdir -p "$BIN_DIR" "$(dirname "$CONFIG_FILE")"
 
 for skills_dir in "${WORK_SKILLS_RESOLVED_DIRS[@]}"; do
