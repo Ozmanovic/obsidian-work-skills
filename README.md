@@ -134,8 +134,6 @@ Install to a custom personal or project-local path:
 ./install.sh --skills-dir /path/to/repo/.agents/skills --vault /path/to/ObsidianVault
 ```
 
-For team rollout, prefer project-local skills only when the whole repo/team should use the same work-memory behavior. Otherwise use personal skills.
-
 Edit config later:
 
 ```bash
@@ -374,13 +372,11 @@ Remove config and timer too:
 ./uninstall.sh --remove-config --remove-timer
 ```
 
-## Notes For Teams
-
-Recommended rollout:
+## Recommended Rollout
 
 1. Install manual skills first.
 2. Run `doctor.sh`.
 3. Use manual checkpoint/resume for a few days.
-4. Enable autojournal only for people who explicitly want it.
+4. Enable autojournal only when you explicitly want scheduled checkpointing.
 
-The timer should not be installed by default on coworker machines.
+The timer is opt-in and should not be enabled by default.
