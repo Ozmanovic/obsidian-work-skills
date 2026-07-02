@@ -55,6 +55,32 @@ Default install locations:
 - config: `~/.agents/project-memory.env`
 - autojournal runner: `~/.local/bin/project-autojournal-run`
 
+### Install Targets
+
+The default `~/.agents/skills` target is the shared OpenAI/Codex-style location used by this package and is also discoverable by VS Code Agent Skills.
+
+Alternative personal targets:
+
+```bash
+# Claude Code personal skills
+WORK_SKILLS_SKILLS_DIR="$HOME/.claude/skills" ./install.sh --vault /path/to/ObsidianVault
+
+# GitHub Copilot / VS Code personal skills
+WORK_SKILLS_SKILLS_DIR="$HOME/.copilot/skills" ./install.sh --vault /path/to/ObsidianVault
+```
+
+Project-local targets:
+
+```bash
+# Copilot / VS Code workspace skills
+WORK_SKILLS_SKILLS_DIR="/path/to/repo/.github/skills" ./install.sh --vault /path/to/ObsidianVault
+
+# Claude workspace skills
+WORK_SKILLS_SKILLS_DIR="/path/to/repo/.claude/skills" ./install.sh --vault /path/to/ObsidianVault
+```
+
+For team rollout, prefer project-local skills only when the whole repo/team should use the same work-memory behavior. Otherwise use personal skills.
+
 Edit config later:
 
 ```bash
@@ -84,6 +110,127 @@ Use $project-completed-summary to save this completed project to Obsidian.
 Use $retro-summary to summarize completed project/work into Obsidian. Project/work: ...
 ```
 
+## Skill Guide
+
+### `save-work-checkpoint`
+
+Use when work is in progress and you want a durable handoff note before stopping, switching tasks, or asking another agent to continue.
+
+Example prompt:
+
+```text
+Use $save-work-checkpoint to save where this project is now.
+```
+
+Writes:
+
+```text
+<vault>/<work-root>/Checkpoints/<project>/YYYY-MM-DD HHmm - checkpoint - <topic>.md
+```
+
+Example chat output:
+
+```text
+- Saved checkpoint: Work/Checkpoints/Example/2026-07-02 1530 - checkpoint - import cleanup.md
+- Captured current state, open questions, next actions, files touched.
+```
+
+### `resume-project-context`
+
+Use when returning to a project/workstream and you need the latest reliable state before continuing.
+
+Example prompt:
+
+```text
+Use $resume-project-context to resume Example project.
+```
+
+Example output shape:
+
+```text
+Project: Example
+Task context: ...
+What has been done so far: ...
+Where left off: ...
+Open questions: ...
+What is next: ...
+```
+
+Rules:
+
+- Reads newest checkpoint first.
+- Reads completed summary if useful.
+- Newer checkpoint/workspace facts override older completed summaries.
+- Does not write a new note unless asked.
+
+### `project-completed-summary`
+
+Use when a piece of work is finished and should be searchable months later.
+
+Example prompt:
+
+```text
+Use $project-completed-summary to save this completed project to Obsidian.
+```
+
+Writes:
+
+```text
+<vault>/<work-root>/Projects/<project>/YYYY-MM-DD - <project>.md
+```
+
+Captures:
+
+- what changed and why
+- important details/logic
+- problems solved
+- decisions
+- verification
+- follow-ups
+
+### `retro-summary`
+
+Use when old work was completed before summaries/checkpoints existed and you want to reconstruct it from prior AI sessions plus local workspace/repo evidence.
+
+Example prompt:
+
+```text
+Use $retro-summary to summarize completed project/work into Obsidian. Project/work: Example invoice cleanup from June.
+```
+
+If no scope is provided, it asks for at least one clue instead of searching everything.
+
+### `implementation-finder`
+
+Use before starting a change when you want similar prior work and a recommended approach.
+
+Example prompt:
+
+```text
+Use $implementation-finder to scout similar implementations for this job/spec: Build a checkpoint export for project notes. It should write Markdown to Obsidian, use existing config if present, avoid daily productivity logs, and work from recent AI session evidence.
+```
+
+If invoked without a real job/spec, it asks:
+
+```text
+What job/spec should I scout similar implementations for? Describe what needs to be built or changed, where it should live if known, what systems/data are involved, and any constraints. More detail is better.
+```
+
+Writes an implementation scout note under the project checkpoint folder when enough context exists.
+
+### `project-autojournal`
+
+Use manually or by optional timer to scan recent AI agent work and create checkpoint notes only when meaningful new work exists.
+
+It does not create daily journals or productivity reports.
+
+Behavior:
+
+- Clear project mapping: writes one fresh checkpoint per project.
+- Unclear project mapping: writes an unsorted draft/question.
+- No new work: writes no checkpoint and updates only no-op state markers.
+- Work already captured by a newer manual checkpoint: writes no duplicate and syncs state.
+
 ## Agent Compatibility
 
 The reusable part is the skill instructions: they are meant to be agent-agnostic and can track any work that has enough evidence, not only software work.
@@ -91,8 +238,9 @@ The reusable part is the skill instructions: they are meant to be agent-agnostic
 Current package support:
 
 - Codex/OpenAI agents: supported by the included `SKILL.md` folders and `agents/openai.yaml` metadata.
-- Claude: the instructions are reusable, but direct Claude Skills installation needs a Claude adapter/export. Do not assume Claude reads this exact Codex/OpenAI metadata layout.
-- GitHub Copilot: use via Copilot instructions or prompt-file style adapters. Copilot does not use this local skill folder as-is.
+- Claude Code: supported by `SKILL.md` folders. Install to `~/.claude/skills` for personal skills or `.claude/skills` for repo-local skills.
+- GitHub Copilot / VS Code: supported through Agent Skills. Install to `~/.copilot/skills`, `.github/skills`, or the shared `~/.agents/skills` location when your VS Code setup discovers it.
+- Prompt files: optional convenience wrappers for slash-command style prompts; not required for the core skills.
 - Scheduled `project-autojournal`: currently Codex CLI powered because `scripts/project-autojournal-run` invokes `codex exec`.
 
 ## Optional Autojournal Timer
