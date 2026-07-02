@@ -4,6 +4,15 @@ Obsidian work-memory skills for saving and resuming project or workstream contex
 
 The package is built around project checkpoints, not productivity tracking.
 
+## Benefits
+
+- Move between Codex, Claude Code, and GitHub Copilot without losing project context.
+- Start an empty agent session with immediate context from previous project notes and checkpoints.
+- Return to old projects faster when making tweaks, answering client/colleague questions, or checking why something was done.
+- Resume after a few days away without rereading full chat threads or rebuilding the whole mental model.
+- Multitask across projects with less context kept in your head; Obsidian becomes the second brain for work state.
+- Keep project memory in your own vault as Markdown files, not locked inside one agent chat history.
+
 ## Included Skills
 
 - `save-work-checkpoint` - save current in-progress project state.
@@ -62,6 +71,11 @@ Not required:
 - Obsidian community plugins.
 - A separate Obsidian agent skill.
 - Obsidian running while notes are written.
+
+Optional Obsidian-related helpers:
+
+- An Obsidian Markdown skill can improve note formatting with wikilinks, callouts, embeds, and richer properties, but this package already includes its own note templates.
+- Obsidian CLI can be useful for interactive vault operations when Obsidian is open, but scheduled autojournal and normal checkpoint writes use direct Markdown file writes.
 
 Optional autojournal only:
 
