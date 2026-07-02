@@ -202,7 +202,7 @@ If no scope is provided, it asks for at least one clue instead of searching ever
 
 ### `implementation-finder`
 
-Use before starting a change when you want similar prior work and a recommended approach.
+Use before starting a project when you want similar prior work and a recommended approach.
 
 Example prompt:
 
