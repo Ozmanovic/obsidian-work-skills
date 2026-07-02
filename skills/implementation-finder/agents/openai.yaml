@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implementation Finder"
+  short_description: "Find similar implementations and recommend an approach."
+  default_prompt: "Use $implementation-finder to scout similar implementations for this job/spec: describe what needs built/changed, systems/data, target location, and constraints."

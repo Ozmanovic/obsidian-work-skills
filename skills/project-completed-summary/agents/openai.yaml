@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Completed Summary"
+  short_description: "Save completed project context to Obsidian."
+  default_prompt: "Use $project-completed-summary to save this completed project to Obsidian."

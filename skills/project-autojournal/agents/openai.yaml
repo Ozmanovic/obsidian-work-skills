@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Autojournal"
+  short_description: "Auto-create Obsidian project checkpoints from AI agent work"
+  default_prompt: "Use $project-autojournal to review new AI agent work and write project checkpoint notes."

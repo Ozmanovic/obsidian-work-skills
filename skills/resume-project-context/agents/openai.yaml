@@ -1,0 +1,4 @@
+interface:
+  display_name: "Resume Project Context"
+  short_description: "Resume project work from Obsidian, AI sessions, and repo state."
+  default_prompt: "Use $resume-project-context to resume this project from Obsidian notes and repo state."
