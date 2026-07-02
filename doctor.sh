@@ -3,12 +3,43 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="${PROJECT_MEMORY_CONFIG:-$HOME/.agents/project-memory.env}"
-SKILLS_DIR="${WORK_SKILLS_SKILLS_DIR:-$HOME/.agents/skills}"
+AGENTS="${WORK_SKILLS_AGENTS:-all}"
+CUSTOM_SKILLS_DIRS=()
 STATUS=0
+
+if [[ -n "${WORK_SKILLS_SKILLS_DIR:-}" ]]; then
+  CUSTOM_SKILLS_DIRS+=("$WORK_SKILLS_SKILLS_DIR")
+fi
 
 ok() { printf 'OK   %s\n' "$*"; }
 warn() { printf 'WARN %s\n' "$*"; }
 fail() { printf 'FAIL %s\n' "$*"; STATUS=1; }
+
+usage() {
+  cat <<'EOF'
+Usage: ./doctor.sh [options]
+
+Options:
+  --agents LIST      Comma-separated: all,codex,claude,copilot. Default: all
+  --skills-dir PATH  Check a custom skill PATH. Can be repeated.
+  --config PATH      Config file path. Default: ~/.agents/project-memory.env
+  -h, --help         Show help.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --agents) AGENTS="$2"; shift 2 ;;
+    --skills-dir) CUSTOM_SKILLS_DIRS+=("$2"); shift 2 ;;
+    --config) CONFIG_FILE="$2"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage; exit 2 ;;
+  esac
+done
+
+# shellcheck source=scripts/skill-targets.sh
+. "$ROOT_DIR/scripts/skill-targets.sh"
+work_skills_resolve_skill_dirs "$AGENTS" "${CUSTOM_SKILLS_DIRS[@]}"
 
 if [[ -f "$CONFIG_FILE" ]]; then
   set -a
@@ -40,20 +71,22 @@ else
   fail "Vault not found. Set PROJECT_MEMORY_VAULT in $CONFIG_FILE"
 fi
 
-for item in \
-  project-memory-common.md \
-  save-work-checkpoint \
-  resume-project-context \
-  project-completed-summary \
-  retro-summary \
-  implementation-finder \
-  project-autojournal
-do
-  if [[ -e "$SKILLS_DIR/$item" ]]; then
-    ok "Installed: $item"
-  else
-    fail "Missing installed skill: $SKILLS_DIR/$item"
-  fi
+for skills_dir in "${WORK_SKILLS_RESOLVED_DIRS[@]}"; do
+  for item in \
+    project-memory-common.md \
+    save-work-checkpoint \
+    resume-project-context \
+    project-completed-summary \
+    retro-summary \
+    implementation-finder \
+    project-autojournal
+  do
+    if [[ -e "$skills_dir/$item" ]]; then
+      ok "Installed in $skills_dir: $item"
+    else
+      fail "Missing installed skill: $skills_dir/$item"
+    fi
+  done
 done
 
 if command -v rg >/dev/null 2>&1; then

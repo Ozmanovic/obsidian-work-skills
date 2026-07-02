@@ -49,34 +49,48 @@ cd work-skills
 ./doctor.sh
 ```
 
-Default install locations:
+By default, personal skills are installed for all supported local agent surfaces:
 
-- skills: `~/.agents/skills`
+- Codex/OpenAI agents: `~/.agents/skills`
+- Claude Code: `~/.claude/skills`
+- GitHub Copilot / VS Code: `~/.copilot/skills`
 - config: `~/.agents/project-memory.env`
 - autojournal runner: `~/.local/bin/project-autojournal-run`
 
 ### Install Targets
 
-The default `~/.agents/skills` target is the shared OpenAI/Codex-style location used by this package and is also discoverable by VS Code Agent Skills.
-
-Alternative personal targets:
+Install only for one agent:
 
 ```bash
-# Claude Code personal skills
-WORK_SKILLS_SKILLS_DIR="$HOME/.claude/skills" ./install.sh --vault /path/to/ObsidianVault
-
-# GitHub Copilot / VS Code personal skills
-WORK_SKILLS_SKILLS_DIR="$HOME/.copilot/skills" ./install.sh --vault /path/to/ObsidianVault
+./install.sh --agents codex --vault /path/to/ObsidianVault
+./install.sh --agents claude --vault /path/to/ObsidianVault
+./install.sh --agents copilot --vault /path/to/ObsidianVault
 ```
 
-Project-local targets:
+Install for multiple agent targets:
+
+```bash
+./install.sh --agents codex,claude --vault /path/to/ObsidianVault
+./install.sh --agents all --vault /path/to/ObsidianVault
+```
+
+The agent targets map to:
+
+- `codex`: `~/.agents/skills`
+- `claude`: `~/.claude/skills`
+- `copilot`: `~/.copilot/skills`
+
+Install to a custom personal or project-local path:
 
 ```bash
 # Copilot / VS Code workspace skills
-WORK_SKILLS_SKILLS_DIR="/path/to/repo/.github/skills" ./install.sh --vault /path/to/ObsidianVault
+./install.sh --skills-dir /path/to/repo/.github/skills --vault /path/to/ObsidianVault
 
 # Claude workspace skills
-WORK_SKILLS_SKILLS_DIR="/path/to/repo/.claude/skills" ./install.sh --vault /path/to/ObsidianVault
+./install.sh --skills-dir /path/to/repo/.claude/skills --vault /path/to/ObsidianVault
+
+# Codex repo-local skills
+./install.sh --skills-dir /path/to/repo/.agents/skills --vault /path/to/ObsidianVault
 ```
 
 For team rollout, prefer project-local skills only when the whole repo/team should use the same work-memory behavior. Otherwise use personal skills.
@@ -237,9 +251,9 @@ The reusable part is the skill instructions: they are meant to be agent-agnostic
 
 Current package support:
 
-- Codex/OpenAI agents: supported by the included `SKILL.md` folders and `agents/openai.yaml` metadata.
-- Claude Code: supported by `SKILL.md` folders. Install to `~/.claude/skills` for personal skills or `.claude/skills` for repo-local skills.
-- GitHub Copilot / VS Code: supported through Agent Skills. Install to `~/.copilot/skills`, `.github/skills`, or the shared `~/.agents/skills` location when your VS Code setup discovers it.
+- Codex/OpenAI agents: supported by `SKILL.md` folders under `~/.agents/skills` or repo-local `.agents/skills`.
+- Claude Code: supported by `SKILL.md` folders under `~/.claude/skills` or repo-local `.claude/skills`.
+- GitHub Copilot / VS Code: supported through Agent Skills under `~/.copilot/skills` or repo-local `.github/skills`.
 - Prompt files: optional convenience wrappers for slash-command style prompts; not required for the core skills.
 - Scheduled `project-autojournal`: currently Codex CLI powered because `scripts/project-autojournal-run` invokes `codex exec`.
 

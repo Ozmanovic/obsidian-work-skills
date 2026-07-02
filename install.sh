@@ -5,13 +5,18 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILLS_SRC="$ROOT_DIR/skills"
 CONFIG_EXAMPLE="$ROOT_DIR/config/project-memory.env.example"
 
-SKILLS_DIR="${WORK_SKILLS_SKILLS_DIR:-$HOME/.agents/skills}"
 CONFIG_FILE="${PROJECT_MEMORY_CONFIG:-$HOME/.agents/project-memory.env}"
 BIN_DIR="${WORK_SKILLS_BIN_DIR:-$HOME/.local/bin}"
+AGENTS="${WORK_SKILLS_AGENTS:-all}"
+CUSTOM_SKILLS_DIRS=()
 NON_INTERACTIVE=0
 FORCE_CONFIG=0
 WITH_TIMER=0
 ENABLE_TIMER=0
+
+if [[ -n "${WORK_SKILLS_SKILLS_DIR:-}" ]]; then
+  CUSTOM_SKILLS_DIRS+=("$WORK_SKILLS_SKILLS_DIR")
+fi
 
 VAULT="${PROJECT_MEMORY_VAULT:-}"
 WORK_ROOT="${PROJECT_MEMORY_WORK_ROOT:-Work}"
@@ -26,7 +31,8 @@ Usage: ./install.sh [options]
 
 Options:
   --non-interactive        Do not prompt. Requires --vault if config is missing.
-  --skills-dir PATH        Install skills to PATH. Default: ~/.agents/skills
+  --agents LIST            Comma-separated: all,codex,claude,copilot. Default: all
+  --skills-dir PATH        Install skills to a custom PATH. Can be repeated.
   --config PATH            Write config to PATH. Default: ~/.agents/project-memory.env
   --vault PATH             Obsidian vault path.
   --work-root NAME         Work folder inside vault. Default: Work
@@ -48,7 +54,8 @@ quote_value() {
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --non-interactive) NON_INTERACTIVE=1; shift ;;
-    --skills-dir) SKILLS_DIR="$2"; shift 2 ;;
+    --agents) AGENTS="$2"; shift 2 ;;
+    --skills-dir) CUSTOM_SKILLS_DIRS+=("$2"); shift 2 ;;
     --config) CONFIG_FILE="$2"; shift 2 ;;
     --vault) VAULT="$2"; shift 2 ;;
     --work-root) WORK_ROOT="$2"; shift 2 ;;
@@ -69,6 +76,10 @@ if [[ ! -d "$SKILLS_SRC" ]]; then
   exit 1
 fi
 
+# shellcheck source=scripts/skill-targets.sh
+. "$ROOT_DIR/scripts/skill-targets.sh"
+work_skills_resolve_skill_dirs "$AGENTS" "${CUSTOM_SKILLS_DIRS[@]}"
+
 if [[ -z "$VAULT" && ! -f "$CONFIG_FILE" && "$NON_INTERACTIVE" -eq 0 ]]; then
   read -r -p "Obsidian vault path: " VAULT
 fi
@@ -78,19 +89,22 @@ if [[ -z "$VAULT" && ! -f "$CONFIG_FILE" ]]; then
   exit 1
 fi
 
-mkdir -p "$SKILLS_DIR" "$BIN_DIR" "$(dirname "$CONFIG_FILE")"
+mkdir -p "$BIN_DIR" "$(dirname "$CONFIG_FILE")"
 
-for item in \
-  project-memory-common.md \
-  save-work-checkpoint \
-  resume-project-context \
-  project-completed-summary \
-  retro-summary \
-  implementation-finder \
-  project-autojournal
-do
-  rm -rf "$SKILLS_DIR/$item"
-  cp -R "$SKILLS_SRC/$item" "$SKILLS_DIR/$item"
+for skills_dir in "${WORK_SKILLS_RESOLVED_DIRS[@]}"; do
+  mkdir -p "$skills_dir"
+  for item in \
+    project-memory-common.md \
+    save-work-checkpoint \
+    resume-project-context \
+    project-completed-summary \
+    retro-summary \
+    implementation-finder \
+    project-autojournal
+  do
+    rm -rf "$skills_dir/$item"
+    cp -R "$SKILLS_SRC/$item" "$skills_dir/$item"
+  done
 done
 
 install -m 0755 "$ROOT_DIR/scripts/project-autojournal-run" "$BIN_DIR/project-autojournal-run"
@@ -128,7 +142,8 @@ fi
 cat <<EOF
 Installed work skills.
 
-Skills: $SKILLS_DIR
+Skill targets:
+$(printf '  %s\n' "${WORK_SKILLS_RESOLVED_DIRS[@]}")
 Config: $CONFIG_FILE
 Runner: $BIN_DIR/project-autojournal-run
 
