@@ -1,0 +1,4 @@
+interface:
+  display_name: "Save Work Checkpoint"
+  short_description: "Save a work handoff checkpoint to Obsidian."
+  default_prompt: "Use $save-work-checkpoint to save the current project/workstream state to Obsidian."

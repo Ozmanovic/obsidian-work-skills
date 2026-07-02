@@ -1,0 +1,4 @@
+interface:
+  display_name: "Retro Summary"
+  short_description: "Summarize older completed work into Obsidian."
+  default_prompt: "Use $retro-summary to summarize completed project/work into Obsidian. Project/work:"

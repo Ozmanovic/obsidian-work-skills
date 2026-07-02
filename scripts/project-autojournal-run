@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+
+CONFIG_FILE="${PROJECT_MEMORY_CONFIG:-$HOME/.agents/project-memory.env}"
+if [[ -f "$CONFIG_FILE" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  . "$CONFIG_FILE"
+  set +a
+fi
+
+VAULT_DIR="${PROJECT_MEMORY_VAULT:-${OBSIDIAN_VAULT:-}}"
+WORK_ROOT="${PROJECT_MEMORY_WORK_ROOT:-Work}"
+REPO_ROOTS="${PROJECT_MEMORY_REPO_ROOTS:-$HOME/git}"
+TIMEZONE="${PROJECT_MEMORY_TIMEZONE:-UTC}"
+STATE_PATH="$VAULT_DIR/$WORK_ROOT/.project-autojournal/state.json"
+UNSORTED_DIR="$VAULT_DIR/$WORK_ROOT/Unsorted AI Work"
+LOG_DIR="${PROJECT_MEMORY_LOG_DIR:-$HOME/.local/state/project-autojournal}"
+LOCK_FILE="$LOG_DIR/run.lock"
+
+export TZ="$TIMEZONE"
+
+mkdir -p "$LOG_DIR"
+
+if [[ -z "$VAULT_DIR" || ! -d "$VAULT_DIR" ]]; then
+  printf '%s project-autojournal vault not found: %s\n' "$(date -Is)" "${VAULT_DIR:-<unset>}" >> "$LOG_DIR/run.log"
+  exit 1
+fi
+
+if ! command -v codex >/dev/null 2>&1; then
+  printf '%s codex CLI not found\n' "$(date -Is)" >> "$LOG_DIR/run.log"
+  exit 1
+fi
+
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+  printf '%s project-autojournal already running\n' "$(date -Is)" >> "$LOG_DIR/run.log"
+  exit 0
+fi
+
+RUN_ID="$(date '+%Y%m%d-%H%M%S')"
+JSON_LOG="$LOG_DIR/$RUN_ID.jsonl"
+FINAL_LOG="$LOG_DIR/$RUN_ID.final.md"
+
+add_dirs=(--add-dir "$VAULT_DIR")
+
+codex_root="${PROJECT_MEMORY_CODEX_SESSIONS:-${CODEX_HOME:-$HOME/.codex}/sessions}"
+claude_root="${PROJECT_MEMORY_CLAUDE_PROJECTS:-${CLAUDE_CONFIG_DIR:-$HOME/.claude}/projects}"
+copilot_ws="${PROJECT_MEMORY_COPILOT_WORKSPACE_STORAGE:-$HOME/.vscode-server/data/User/workspaceStorage}"
+copilot_global="${PROJECT_MEMORY_COPILOT_GLOBAL_STORAGE:-$HOME/.vscode-server/data/User/globalStorage/github.copilot-chat}"
+
+for path in "$codex_root" "$claude_root" "$copilot_ws" "$copilot_global"; do
+  [[ -e "$path" ]] && add_dirs+=(--add-dir "$path")
+done
+
+IFS=':' read -r -a repo_roots <<< "$REPO_ROOTS"
+first_repo_root=""
+for root in "${repo_roots[@]}"; do
+  expanded="${root/#\~/$HOME}"
+  if [[ -d "$expanded" ]]; then
+    add_dirs+=(--add-dir "$expanded")
+    [[ -z "$first_repo_root" ]] && first_repo_root="$expanded"
+  fi
+done
+
+cd "${first_repo_root:-$HOME}"
+
+codex exec \
+  --json \
+  --ephemeral \
+  --sandbox workspace-write \
+  "${add_dirs[@]}" \
+  -o "$FINAL_LOG" \
+  "Use \$project-autojournal. Resolved vault is $VAULT_DIR, work root is $WORK_ROOT, timezone is $TIMEZONE, repo roots are $REPO_ROOTS. Review new AI agent work since the last project-autojournal state update. If state is missing, process only today's work in the configured timezone, not historical backfill. Ignore project-autojournal runner logs, systemd logs, current autojournal run, and any prior transcript whose main task was project-autojournal. Create fresh Obsidian checkpoints only when there is meaningful new project/workstream work that is not already captured. If unprocessed work is fully captured by a newer existing/manual checkpoint, create 0 checkpoints and 0 unsorted drafts; sync only the matching project latestCheckpointPath, lastProcessedAt, session markers, and gitHeads for covered inputs. Do not mark partial, conflicting, or uncertain inputs as processed. If no meaningful new project/workstream work exists, create 0 checkpoints and 0 unsorted drafts; update only top-level lastRunAt, lastNoopAt, and lastNoopReason in $STATE_PATH; do not change per-project latestCheckpointPath, lastProcessedAt, session markers, or gitHeads except ignored autojournal/noise records or already-captured checkpoint sync; final answer must say 'No new project work found.' Update $STATE_PATH only after successful note/draft writes, except no-op marker updates and already-captured checkpoint sync. Do not create a daily journal. Do not edit source/work files, commit, push, deploy, or change production systems. If project mapping is unclear, write an unsorted draft/question under $UNSORTED_DIR/." \
+  > "$JSON_LOG" \
+  2>> "$LOG_DIR/run.log"
