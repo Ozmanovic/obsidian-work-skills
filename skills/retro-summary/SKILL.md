@@ -11,7 +11,7 @@ User communication rule: "When reporting/answering to me. Be extremely concise. 
 
 ## Default Output
 
-- Vault: resolve via `../project-memory-common.md`
+- Vault: resolve via `references/project-memory-common.md`
 - Write using the `project-completed-summary` format.
 - Folder: `<vault>/<work-root>/Projects/<project-name>/`
 - Filename: `<YYYY-MM-DD> - <project-name> - retro-summary.md`
@@ -19,7 +19,7 @@ User communication rule: "When reporting/answering to me. Be extremely concise. 
 
 ## Shared Rules
 
-Read `../project-memory-common.md` before searching. Retro summaries depend on source discovery, project identity order, safety rules, and confidence handling.
+Read `references/project-memory-common.md` before searching. Retro summaries depend on source discovery, project identity order, safety rules, and confidence handling.
 
 ## Workflow
 
@@ -36,7 +36,7 @@ Read `../project-memory-common.md` before searching. Retro summaries depend on s
    - Extract only relevant user/assistant messages, tool summaries, file names, decisions, errors, and verification results.
    - Do not dump full transcripts into notes.
 3. Find matching repo:
-   - Search configured `<repo-roots>` from `../project-memory-common.md`.
+   - Search configured `<repo-roots>` from `references/project-memory-common.md`.
    - Match by function/project folder, file names, branch names, commits, and thread cwd.
    - Capture project/function name, repo name, and absolute repo path.
 4. Gather repo facts:
@@ -56,7 +56,7 @@ Read `../project-memory-common.md` before searching. Retro summaries depend on s
 
 ## Search Hints
 
-- Session logs are usually JSONL or SQLite-backed. Search before parsing: `rg -i "<project-term>" <available-agent-session-roots>`.
+- Session logs are usually JSONL or SQLite-backed. Search before parsing. Use `rg -i "<project-term>" <available-agent-session-roots>` when available; otherwise use `grep`, `find`, or agent-native search.
 - Useful terms: project name, customer name, function name, integration system names, repo names, file names, branch names.
 - Relevant local repos usually live under configured `<repo-roots>`.
 

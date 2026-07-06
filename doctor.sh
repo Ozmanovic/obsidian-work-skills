@@ -80,6 +80,7 @@ fi
 for skills_dir in "${WORK_SKILLS_RESOLVED_DIRS[@]}"; do
   for item in \
     project-memory-common.md \
+    setup-obsidian-work-skills \
     save-work-checkpoint \
     resume-project-context \
     project-completed-summary \
@@ -98,7 +99,7 @@ done
 if command -v rg >/dev/null 2>&1; then
   ok "rg found: $(command -v rg)"
 else
-  fail "rg not found"
+  warn "rg not found. Searches will fall back to slower grep/find/git grep where possible."
 fi
 
 if command -v git >/dev/null 2>&1; then

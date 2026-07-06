@@ -106,6 +106,7 @@ for skills_dir in "${WORK_SKILLS_RESOLVED_DIRS[@]}"; do
   mkdir -p "$skills_dir"
   for item in \
     project-memory-common.md \
+    setup-obsidian-work-skills \
     save-work-checkpoint \
     resume-project-context \
     project-completed-summary \

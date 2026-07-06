@@ -1,0 +1,4 @@
+interface:
+  display_name: "Setup Obsidian Work Skills"
+  short_description: "Configure vault and project memory"
+  default_prompt: "Use $setup-obsidian-work-skills to configure my Obsidian work skills."

@@ -9,7 +9,7 @@ Create a durable Obsidian note that lets the user recover project/work context m
 
 ## Default Output
 
-- Vault: resolve via `../project-memory-common.md`
+- Vault: resolve via `references/project-memory-common.md`
 - Folder: `<vault>/<work-root>/Projects/<project-name>/`
 - Filename: `<YYYY-MM-DD> - <short-project-title>.md`
 - Create folders if missing.
@@ -18,7 +18,7 @@ Create a durable Obsidian note that lets the user recover project/work context m
 
 ## Shared Rules
 
-Read `../project-memory-common.md` when current visible thread is incomplete, project identity is unclear, or AI agent session evidence may contain the completed work.
+Read `references/project-memory-common.md` when current visible thread is incomplete, project identity is unclear, or AI agent session evidence may contain the completed work.
 
 ## Workflow
 

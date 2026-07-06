@@ -15,6 +15,7 @@ The package is built around project checkpoints, not productivity tracking.
 
 ## Included Skills
 
+- `setup-obsidian-work-skills` - first-run setup for vault/config/source checks.
 - `save-work-checkpoint` - save current in-progress project state.
 - `resume-project-context` - resume from latest checkpoint/project summary/repo facts.
 - `project-completed-summary` - save a durable finished-project summary.
@@ -54,14 +55,14 @@ It should not:
 
 Required:
 
-- Bash shell on Linux, macOS, or WSL.
 - A local Obsidian vault folder path that the agent can read and write.
-- `rg` / ripgrep available on `PATH`.
 - At least one supported agent surface: Codex/OpenAI, Claude Code, or GitHub Copilot / VS Code with Agent Skills.
+- For the recommended install path: Node/npm with `npx`.
 
 Recommended:
 
 - Obsidian desktop app installed so you can view/search the generated notes.
+- `rg` / ripgrep available on `PATH` for fast searches across repos, notes, and local agent sessions. If missing, skills fall back to slower `grep`/`find`/`git grep` style search.
 - `git` available on `PATH` if you want repo/workspace facts, commit history, diffs, and implementation search.
 - Local AI session history enabled for the agents you want to journal from: Codex, Claude, and/or Copilot.
 
@@ -79,10 +80,43 @@ Optional Obsidian-related helpers:
 
 Optional autojournal only:
 
+- A cloned copy of this repo or the script installer, because the packaged timer uses `scripts/project-autojournal-run`.
 - Codex CLI, because the scheduled runner currently invokes `codex exec`.
 - user-level `systemd` timers if you want scheduled runs on Linux/WSL.
 
 ## Install
+
+Recommended skills.sh-style path:
+
+```bash
+npx skills@latest add Ozmanovic/obsidian-work-skills
+```
+
+Pick the skills you want and the agents you want to install them for. For first setup, install all skills and include `setup-obsidian-work-skills`.
+
+Then run this in your agent:
+
+```text
+Use $setup-obsidian-work-skills to configure my Obsidian work skills.
+```
+
+If you already know your vault path:
+
+```text
+Use $setup-obsidian-work-skills to configure my Obsidian work skills. Vault: /path/to/ObsidianVault
+```
+
+The setup skill creates or updates:
+
+```text
+~/.agents/project-memory.env
+```
+
+That config is shared by Codex, Claude Code, Copilot, and the optional autojournal runner.
+
+### Script Install
+
+The scripts are an optional fallback for cloned repos, repeatable local installs, offline/manual setup, scheduled autojournal runner installation, and troubleshooting. They are not required for normal skills.sh-style manual checkpoint/resume usage.
 
 ```bash
 cd work-skills
@@ -98,7 +132,7 @@ By default, personal skills are installed for all supported local agent surfaces
 - config: `~/.agents/project-memory.env`
 - autojournal runner: `~/.local/bin/project-autojournal-run`
 
-### Install Targets
+### Script Install Targets
 
 Install only for one agent:
 
@@ -156,6 +190,7 @@ PROJECT_MEMORY_AUTOJOURNAL_TIME=15:30
 Use these in any agent surface that has these skills/instructions installed:
 
 ```text
+Use $setup-obsidian-work-skills to configure my Obsidian work skills.
 Use $implementation-finder to scout similar implementations for this job/spec: ...
 Use $save-work-checkpoint to save the current project state to Obsidian.
 Use $resume-project-context to resume this project.
@@ -164,6 +199,24 @@ Use $retro-summary to summarize completed project/work into Obsidian. Project/wo
 ```
 
 ## Skill Guide
+
+### `setup-obsidian-work-skills`
+
+Use once after install, or again when changing vault path, repo roots, agent sources, or autojournal settings.
+
+Example prompt:
+
+```text
+Use $setup-obsidian-work-skills to configure my Obsidian work skills. Vault: /path/to/ObsidianVault
+```
+
+Writes or updates:
+
+```text
+~/.agents/project-memory.env
+```
+
+It checks vault write access, agent source locations, `git`, optional `rg`, and optional Codex CLI for scheduled autojournal.
 
 ### `save-work-checkpoint`
 
@@ -300,6 +353,8 @@ Current package support:
 
 Autojournal timer is opt-in. It creates a user-level systemd timer that runs the current Codex-powered `project-autojournal` runner once per day.
 
+The packaged timer requires a cloned repo/script install so `project-autojournal-run` exists under `~/.local/bin`. Normal `npx skills` installation is enough for manual skill usage, but not for the packaged scheduled runner.
+
 Install but do not enable:
 
 ```bash
@@ -332,7 +387,7 @@ Logs:
 
 ## Doctor
 
-Run this after install or when something feels broken:
+Optional troubleshooting tool for cloned/script installs, or when something feels broken:
 
 ```bash
 ./doctor.sh
@@ -344,7 +399,7 @@ It checks:
 - vault exists and is writable
 - `.obsidian` vault marker exists, with a warning if missing
 - skills are installed
-- `rg` exists
+- `rg` exists, with a warning if missing
 - `git` exists, with a warning if missing
 - Obsidian command exists when available, informational only
 - Codex CLI exists for the optional scheduled autojournal runner
@@ -374,9 +429,10 @@ Remove config and timer too:
 
 ## Recommended Rollout
 
-1. Install manual skills first.
-2. Run `doctor.sh`.
+1. Install skills with `npx skills@latest add Ozmanovic/obsidian-work-skills`.
+2. Run `setup-obsidian-work-skills` in your agent.
 3. Use manual checkpoint/resume for a few days.
-4. Enable autojournal only when you explicitly want scheduled checkpointing.
+4. Run `doctor.sh` only if you cloned the repo or need troubleshooting.
+5. Enable autojournal only when you explicitly want scheduled checkpointing.
 
 The timer is opt-in and should not be enabled by default.

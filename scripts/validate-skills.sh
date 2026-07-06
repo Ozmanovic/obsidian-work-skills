@@ -11,6 +11,7 @@ fail() {
 }
 
 required=(
+  setup-obsidian-work-skills
   save-work-checkpoint
   resume-project-context
   project-completed-summary
@@ -31,13 +32,13 @@ for skill in "${required[@]}"; do
 
   first_line="$(sed -n '1p' "$skill_file")"
   [[ "$first_line" == "---" ]] || fail "$skill SKILL.md missing opening frontmatter"
-  rg -q "^name: $skill$" "$skill_file" || fail "$skill SKILL.md name mismatch"
-  rg -q "^description: .+" "$skill_file" || fail "$skill SKILL.md missing description"
+  grep -Eq "^name: $skill$" "$skill_file" || fail "$skill SKILL.md name mismatch"
+  grep -Eq "^description: .+" "$skill_file" || fail "$skill SKILL.md missing description"
 
   if [[ -f "$ui_file" ]]; then
-    rg -q "display_name:" "$ui_file" || fail "$skill openai.yaml missing display_name"
-    rg -q "short_description:" "$ui_file" || fail "$skill openai.yaml missing short_description"
-    rg -q "default_prompt: .+\\\$$skill" "$ui_file" || fail "$skill openai.yaml default_prompt should mention \$$skill"
+    grep -Eq "display_name:" "$ui_file" || fail "$skill openai.yaml missing display_name"
+    grep -Eq "short_description:" "$ui_file" || fail "$skill openai.yaml missing short_description"
+    grep -Eq "default_prompt: .+\\\$$skill" "$ui_file" || fail "$skill openai.yaml default_prompt should mention \$$skill"
     short_description="$(awk -F'"' '/short_description:/ {print $2}' "$ui_file")"
     if [[ "${#short_description}" -lt 25 || "${#short_description}" -gt 64 ]]; then
       fail "$skill short_description must be 25-64 chars"
@@ -45,10 +46,12 @@ for skill in "${required[@]}"; do
   else
     fail "$skill missing agents/openai.yaml"
   fi
+
+  [[ -f "$skill_dir/references/project-memory-common.md" ]] || fail "$skill missing references/project-memory-common.md"
 done
 
-if rg -n '/home/wsluser|/mnt/c/OBSIDIAN/Work' "$SKILLS_DIR" >/dev/null; then
-  rg -n '/home/wsluser|/mnt/c/OBSIDIAN/Work' "$SKILLS_DIR" >&2
+if grep -R -n -E '/home/wsluser|/mnt/c/OBSIDIAN/Work' "$SKILLS_DIR" >/dev/null; then
+  grep -R -n -E '/home/wsluser|/mnt/c/OBSIDIAN/Work' "$SKILLS_DIR" >&2
   fail "Machine-specific paths found"
 fi
 

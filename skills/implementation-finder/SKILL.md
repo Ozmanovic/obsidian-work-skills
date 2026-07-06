@@ -11,7 +11,7 @@ User communication rule: sacrifice grammar for concision. Chat output must be sh
 
 ## Shared Rules
 
-Read `../project-memory-common.md` before saving Obsidian scout notes, resolving vault paths, or using project memory source rules.
+Read `references/project-memory-common.md` before saving Obsidian scout notes, resolving vault paths, or using project memory source rules.
 
 ## Workflow
 
@@ -25,14 +25,14 @@ Read `../project-memory-common.md` before saving Obsidian scout notes, resolving
 2. Search progressively:
    - Start in current repo.
    - If not enough signal, search sibling repos under the same parent, especially `azure-*`.
-   - If still weak, search configured `<repo-roots>` from `../project-memory-common.md`.
-   - Use `rg` and `rg --files` first.
+   - If still weak, search configured `<repo-roots>` from `references/project-memory-common.md`.
+   - Use `rg` and `rg --files` when available. If missing, use `grep`, `find`, `git grep`, editor search, or agent-native search.
    - Search by project/customer/system names, function names, package/import names, file patterns, domain words, and translated/local-language terms when relevant.
    - Read project docs only when they affect approach. Respect local `AGENTS.md` and relevant `docs/agents/*`.
    - Identify the requested target project/function if it already exists. If it is only scaffold/skeleton/placeholder, report it as `Target scaffold`, not as a similar implementation.
 
 3. Read likely matches deeply:
-   - Do not rely only on `rg` snippets for likely matches.
+   - Do not rely only on search snippets for likely matches.
    - Read `index.ts`, schemas/config files, helpers/classes, and docs/readmes when they explain approach.
    - Prefer newer patterns over older ones. Signals: current helper APIs, repo conventions, recent architecture, local docs, cleaner schema usage, fewer deprecated libraries.
    - Keep older matches only if they contain domain-specific knowledge not present in newer code.
@@ -65,7 +65,7 @@ Read `../project-memory-common.md` before saving Obsidian scout notes, resolving
    - Do not ask questions whose answer is obvious from the repo or can be handled by conservative default.
 
 9. Save detailed scout to Obsidian:
-   - Resolve vault via `../project-memory-common.md`.
+   - Resolve vault via `references/project-memory-common.md`.
    - Folder: `<vault>/<work-root>/Checkpoints/<project-name>/`
    - Filename: `<YYYY-MM-DD> - <repo> - <task-short-title> - implementation scout.md`
    - Create folders if missing. Overwrite the same file if this scout is run again for the same repo/task/date.

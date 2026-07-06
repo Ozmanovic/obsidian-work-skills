@@ -11,14 +11,14 @@ User communication rule: "When reporting/answering to me. Be extremely concise. 
 
 ## Default Sources
 
-- Vault: resolve via `../project-memory-common.md`
+- Vault: resolve via `references/project-memory-common.md`
 - Project summaries: `<vault>/<work-root>/Projects/<project-name>/`
 - Checkpoints: `<vault>/<work-root>/Checkpoints/<project-name>/`
 - Prefer newest relevant notes, then older summaries if needed.
 
 ## Shared Rules
 
-Read `../project-memory-common.md` when notes are stale, the user asks for latest work, project identity is ambiguous, or AI agent session evidence may change the answer.
+Read `references/project-memory-common.md` when notes are stale, the user asks for latest work, project identity is ambiguous, or AI agent session evidence may change the answer.
 
 ## Workflow
 

@@ -9,20 +9,20 @@ Maintain project checkpoint memory in Obsidian from recent AI agent work. This s
 
 ## Defaults
 
-- Vault: resolve via `../project-memory-common.md`
+- Vault: resolve via `references/project-memory-common.md`
 - Project notes: `<vault>/<work-root>/Projects/<Project>/`
 - Checkpoints: `<vault>/<work-root>/Checkpoints/<Project>/`
 - State: `<vault>/<work-root>/.project-autojournal/state.json`
 - Unclear work: `<vault>/<work-root>/Unsorted AI Work/`
 - Timezone: `<timezone>`
 - Repo roots: `<repo-roots>`
-- Agent sources: configured in `../project-memory-common.md`
+- Agent sources: configured in `references/project-memory-common.md`
 
 Do not create a daily journal. Do not write productivity summaries.
 
 ## Shared Rules
 
-Read `../project-memory-common.md` before resolving vault paths, source registry rules, project identity, latest-wins behavior, or safety rules.
+Read `references/project-memory-common.md` before resolving vault paths, source registry rules, project identity, latest-wins behavior, or safety rules.
 
 ## Run Policy
 

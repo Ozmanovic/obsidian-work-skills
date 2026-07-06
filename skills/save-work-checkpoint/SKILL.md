@@ -11,7 +11,7 @@ User communication rule: "When reporting/answering to me. Be concise. Sacrifice 
 
 ## Default Output
 
-- Vault: resolve via `../project-memory-common.md`
+- Vault: resolve via `references/project-memory-common.md`
 - Folder: `<vault>/<work-root>/Checkpoints/<project-name>/`
 - Filename: `<YYYY-MM-DD HHmm> - checkpoint - <short-title>.md`
 - Create folders if missing.
@@ -19,7 +19,7 @@ User communication rule: "When reporting/answering to me. Be concise. Sacrifice 
 
 ## Shared Rules
 
-Read `../project-memory-common.md` when current visible thread is incomplete, project identity is unclear, or AI agent session evidence may contain the latest work.
+Read `references/project-memory-common.md` when current visible thread is incomplete, project identity is unclear, or AI agent session evidence may contain the latest work.
 
 ## Workflow
 

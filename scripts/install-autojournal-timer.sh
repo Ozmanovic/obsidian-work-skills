@@ -53,7 +53,7 @@ fi
 runner="$HOME/.local/bin/project-autojournal-run"
 if [[ ! -x "$runner" ]]; then
   echo "Runner not found or not executable: $runner" >&2
-  echo "Run ./install.sh first." >&2
+  echo "Run ./install.sh from a cloned work-skills repo first. Normal npx skills installs do not install the scheduled runner." >&2
   exit 1
 fi
 
