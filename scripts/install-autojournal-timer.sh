@@ -45,8 +45,31 @@ if [[ -f "$CONFIG_FILE" ]]; then
   TIMER_TIME="${PROJECT_MEMORY_AUTOJOURNAL_TIME:-$TIMER_TIME}"
 fi
 
-if ! command -v systemctl >/dev/null 2>&1 || ! systemctl --user show-environment >/dev/null 2>&1; then
-  echo "systemd user timers are not available on this machine." >&2
+# The config may name several slots a day. Honour the plural first and fall back to the
+# singular, otherwise a machine configured for 15:30,18:30,22:30 silently gets one run.
+TIMER_TIMES="${PROJECT_MEMORY_AUTOJOURNAL_TIMES:-$TIMER_TIME}"
+IFS=',' read -r -a timer_slots <<< "$TIMER_TIMES"
+for i in "${!timer_slots[@]}"; do
+  slot="${timer_slots[$i]//[[:space:]]/}"
+  if [[ ! "$slot" =~ ^([01][0-9]|2[0-3]):[0-5][0-9]$ ]]; then
+    echo "Invalid autojournal time: '$slot' (expected HH:MM)" >&2
+    exit 2
+  fi
+  timer_slots[$i]="$slot"
+done
+
+# systemd user timers are the preferred mechanism, but plenty of machines do not have a user
+# bus at all -- WSL being the common one. Falling through to cron keeps those installs
+# scheduled instead of leaving them with no timer and no warning.
+SCHEDULER=""
+if command -v systemctl >/dev/null 2>&1 && systemctl --user show-environment >/dev/null 2>&1; then
+  SCHEDULER="systemd"
+elif command -v crontab >/dev/null 2>&1; then
+  SCHEDULER="cron"
+else
+  echo "No supported scheduler found: neither systemd user timers nor crontab." >&2
+  echo "On Windows/WSL, schedule $HOME/.local/bin/project-autojournal-run from Windows Task" >&2
+  echo "Scheduler instead, with 'Run task as soon as possible after a scheduled start is missed'." >&2
   exit 1
 fi
 
@@ -61,7 +84,7 @@ if [[ "$YES" -eq 0 ]]; then
   cat <<EOF
 Optional autojournal timer
 
-This creates a user-level systemd timer. The current runner uses Codex CLI once per day.
+This creates a $SCHEDULER schedule. The runner uses Codex CLI once per configured slot.
 
 May read:
 - local Codex/Claude/Copilot session files
@@ -77,13 +100,36 @@ Will not:
 - commit, push, or deploy
 - create productivity reports
 
-Install timer for $TIMER_TIME? [y/N]
+Install $SCHEDULER schedule for ${timer_slots[*]}? [y/N]
 EOF
   read -r answer
   case "$answer" in
     y|Y|yes|YES) ;;
     *) echo "Timer not installed."; exit 0 ;;
   esac
+fi
+
+if [[ "$SCHEDULER" == "cron" ]]; then
+  marker_begin="# BEGIN project-autojournal (managed by obsidian-work-skills)"
+  marker_end="# END project-autojournal (managed by obsidian-work-skills)"
+  existing="$(crontab -l 2>/dev/null || true)"
+  # Drop any previous managed block so repeated installs replace rather than accumulate.
+  cleaned="$(printf '%s\n' "$existing" | awk -v b="$marker_begin" -v e="$marker_end" '
+    $0 == b { skip = 1 } skip == 0 { print } $0 == e { skip = 0 }')"
+  {
+    printf '%s\n' "$cleaned"
+    printf '%s\n' "$marker_begin"
+    for slot in "${timer_slots[@]}"; do
+      printf '%s %s * * * PROJECT_MEMORY_CONFIG=%q %q\n' \
+        "${slot#*:}" "${slot%:*}" "$CONFIG_FILE" "$runner"
+    done
+    printf '%s\n' "$marker_end"
+  } | crontab -
+
+  echo "Installed cron entries for: ${timer_slots[*]}"
+  echo "Note: cron does not catch up a slot missed while the machine was off."
+  echo "Remove with: crontab -e  (delete the managed project-autojournal block)"
+  exit 0
 fi
 
 systemd_dir="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
@@ -99,18 +145,19 @@ Environment="PROJECT_MEMORY_CONFIG=$(unit_escape "$CONFIG_FILE")"
 ExecStart="$(unit_escape "$runner")"
 EOF
 
-cat > "$systemd_dir/project-autojournal.timer" <<EOF
-[Unit]
-Description=Run Work Skills project autojournal daily
-
-[Timer]
-OnCalendar=*-*-* $TIMER_TIME:00
-Persistent=true
-Unit=project-autojournal.service
-
-[Install]
-WantedBy=timers.target
-EOF
+{
+  printf '[Unit]\n'
+  printf 'Description=Run Work Skills project autojournal\n\n'
+  printf '[Timer]\n'
+  for slot in "${timer_slots[@]}"; do
+    printf 'OnCalendar=*-*-* %s:00\n' "$slot"
+  done
+  # Persistent runs a slot that was missed while the machine was off.
+  printf 'Persistent=true\n'
+  printf 'Unit=project-autojournal.service\n\n'
+  printf '[Install]\n'
+  printf 'WantedBy=timers.target\n'
+} > "$systemd_dir/project-autojournal.timer"
 
 systemctl --user daemon-reload
 

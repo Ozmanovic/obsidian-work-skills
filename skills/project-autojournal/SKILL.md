@@ -27,7 +27,8 @@ Read `references/project-memory-common.md` before resolving vault paths, source 
 ## Run Policy
 
 - Write Obsidian automatically when project mapping is clear.
-- Create a new checkpoint note for each project with meaningful unprocessed work.
+- Create a new checkpoint note for **every** project or workstream with meaningful unprocessed work in the same run. One note per run is only correct when exactly one candidate exists.
+- Treat concurrent workstreams inside one repo as separate candidates. A repo with several active worktrees or branches produces one checkpoint per worktree, not one per repo.
 - Preserve history: never overwrite older checkpoints.
 - Update state after successful checkpoint writes.
 - If meaningful unprocessed work is already fully captured by a newer manual/existing checkpoint, do not write a duplicate checkpoint; sync state to that checkpoint.
@@ -36,6 +37,31 @@ Read `references/project-memory-common.md` before resolving vault paths, source 
 - Do not edit source/work files, commit, push, run deployments, or change production systems.
 - Avoid raw dumps of transcripts, secrets, `.env` values, payroll/person data, customer exports, or long logs.
 - Ignore project-autojournal's own runner logs, systemd service logs, JSONL output logs, final-message logs, any active/current autojournal run, and any past transcript whose main task was running `project-autojournal`.
+
+## Candidate Enumeration And Completeness
+
+A run must not stop after the first project it finds. Enumerate before writing, then resolve
+every candidate.
+
+1. **Enumerate first.** Build the complete candidate list before writing any note. Do not
+   interleave discovery and writing: writing as you go is what makes a run stop at the first
+   or most recent candidate and silently drop the rest.
+2. **Key each candidate** by project plus workstream. The workstream key is the repo worktree
+   path when available, otherwise the branch, otherwise the project name. Two active
+   worktrees of the same repo are two candidates and get two checkpoints.
+3. **Resolve every candidate.** Each one must end in exactly one of:
+   - a checkpoint note written,
+   - an already-captured state sync,
+   - an unsorted draft/question,
+   - an explicit skip with a recorded reason (noise, autojournal's own run, no meaningful
+     change).
+4. **Reconcile before finishing.** Compare candidates enumerated against candidates resolved.
+   They must match. If any candidate is unresolved, the run is incomplete: say so in the final
+   summary and name the unresolved candidates rather than reporting success.
+5. **Do not rank candidates.** Recency ordering is for discovery only. Never let it become a
+   reason to journal the newest workstream and drop the others.
+6. **Partial failure is contained.** If one candidate fails to write, still resolve the rest,
+   and update state only for the ones that succeeded.
 
 ## Sources
 
@@ -87,6 +113,14 @@ Recommended shape:
       "repoPaths": ["<repo-root>/example"],
       "latestCheckpointPath": "<work-root>/Checkpoints/ExampleProject/2026-06-29 1530 - checkpoint - example.md",
       "lastProcessedAt": "2026-06-29T15:30:00+03:00",
+      "workstreams": {
+        "<repo-root>/example-feature-a": {
+          "branch": "feature-a",
+          "latestCheckpointPath": "<work-root>/Checkpoints/ExampleProject/2026-06-29 1530 - checkpoint - feature-a.md",
+          "lastProcessedAt": "2026-06-29T15:30:00+03:00",
+          "gitHead": "abcdef123"
+        }
+      },
       "codexSessions": {
         "<codex-session-root>/2026/06/29/session.jsonl": {
           "mtimeMs": 1782736200000,
@@ -114,7 +148,11 @@ Recommended shape:
 }
 ```
 
-If the shape needs to evolve, keep `version`, preserve existing data, and migrate conservatively.
+If the shape needs to evolve, keep `version`, preserve existing data, and migrate
+conservatively. `workstreams` is optional and additive: a project that has only ever had one
+active worktree does not need it, and an older state file without it stays valid. Populate it
+as soon as a project has two or more concurrent worktrees, because project-level
+`lastProcessedAt` alone cannot express that one workstream is captured while another is not.
 
 ## Already-Captured Checkpoint Sync
 
@@ -229,15 +267,16 @@ Keep notes useful for resuming work. Avoid tracking time spent, output volume, o
 3. Find recently changed AI agent session files not fully processed by state.
 4. Exclude the active autojournal run, prior project-autojournal runs, and logs under `~/.local/state/project-autojournal`.
 5. Extract safe summaries of meaningful work.
-6. Identify related repo paths and inspect git metadata.
-7. Read latest Obsidian checkpoint/project note for each mapped project.
-8. Compare with previous state; keep only new or changed information.
-9. If new inputs are fully captured by a newer checkpoint, write no duplicate note and sync state to that checkpoint.
-10. Write fresh checkpoint notes for mapped projects with meaningful uncaptured work.
-11. Write unsorted question drafts for unclear work.
-12. If no meaningful new work remains after comparison, create no notes and update only top-level no-op markers, except already-captured checkpoint sync.
+6. Identify related repo paths and inspect git metadata, including every active worktree.
+7. Enumerate the full candidate list as described in `Candidate Enumeration And Completeness`.
+8. Read latest Obsidian checkpoint/project note for each mapped candidate.
+9. Compare with previous state; keep only new or changed information.
+10. For each candidate in turn: if its inputs are fully captured by a newer checkpoint, write no duplicate note and sync state to that checkpoint; otherwise write a fresh checkpoint note; if mapping is unclear, write an unsorted question draft.
+11. Continue until every enumerated candidate is resolved. Do not stop early because one note has been written.
+12. If no meaningful new work remains for any candidate, create no notes and update only top-level no-op markers, except already-captured checkpoint sync.
 13. Update `state.json` only after note/draft writes succeed, except no-op marker updates and already-captured checkpoint sync.
-14. Return a terse summary: checkpoints created, unsorted drafts created, already-captured sync count, no-op reason, errors.
+14. Reconcile enumerated against resolved candidates.
+15. Return a terse summary: candidates found, checkpoints created, unsorted drafts created, already-captured sync count, skipped-with-reason count, no-op reason, errors. If candidates found does not equal candidates resolved, report the run as incomplete and name what was missed.
 
 ## Scheduled Run Behavior
 
@@ -246,6 +285,8 @@ For unattended runs:
 - Prefer no user interaction.
 - If confidence is high, write checkpoints.
 - If confidence is low, create an unsorted draft/question.
+- Resolve every enumerated candidate before finishing. An unattended run that writes one note
+  and exits while other candidates are still unresolved is a failed run, not a successful one.
 - If there is no meaningful new project work, create nothing except no-op state markers and return `No new project work found.`
 - If Obsidian or transcript paths are unavailable, fail clearly and do not update state.
 - If another run is active, exit without doing work.

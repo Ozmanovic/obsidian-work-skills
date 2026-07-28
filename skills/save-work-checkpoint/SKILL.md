@@ -42,14 +42,25 @@ Read `references/project-memory-common.md` when current visible thread is incomp
    - Include open risks, partial assumptions, commands/tests run, and files touched.
    - Use enough context that another agent can resume without rereading the whole thread or guessing from code alone.
    - Do not include a "Resume Prompt" or instructions telling a future agent to start work. The checkpoint is context, not an execution request.
-4. Reply to user:
+4. Update autojournal state:
+   - Path: `<vault>/<work-root>/.project-autojournal/state.json`.
+   - Only after the note is written. Note first, then state, never the reverse.
+   - Set the project's `latestCheckpointPath` to the new note and `lastProcessedAt` to the checkpoint timestamp. If the project has a `workstreams` map, set the same two fields on the entry for this worktree, keyed by worktree path, and record its `gitHead`.
+   - Create the project entry if it is missing. Create the state file, with `version` and an empty `projects` object, if it does not exist.
+   - Record `gitHeads` for the repos this checkpoint covers, so the next scheduled run can tell the work is captured.
+   - Do not touch other projects, `lastNoopAt`, or `lastNoopReason`.
+   - If the file is missing, unreadable, or does not parse, leave it alone and say so in the reply. The checkpoint note is the durable artifact; state is an optimisation and must never cost the note.
+
+   Without this, `project-autojournal` still sees the work as unprocessed and writes a duplicate checkpoint on its next scheduled run.
+5. Reply to user:
    - 1-3 terse bullets max.
    - Include saved path.
+   - Say whether autojournal state was updated.
    - Do not paste the whole note unless asked.
 
 ## Completion Gate
 
-Done only when the checkpoint file exists, required frontmatter is filled, no placeholders remain, open questions are separated from next actions, verification is explicit, and the final reply includes the saved path.
+Done only when the checkpoint file exists, required frontmatter is filled, no placeholders remain, open questions are separated from next actions, verification is explicit, autojournal state is updated or its failure is reported, and the final reply includes the saved path.
 
 ## Note Template
 
